@@ -8,8 +8,10 @@
 * License   :  https://www.boost.org/LICENSE_1_0.txt                           *
 *******************************************************************************/
 
+#nullable enable
 using System;
 using System.Collections.Generic;
+using EternityWorks;
 
 namespace Clipper2Lib
 {
@@ -25,11 +27,11 @@ namespace Clipper2Lib
 
   internal class Vertex2
   {
-    public Point64 pt;
+    public Point pt;
     public List<Edge> edges = new List<Edge>();
     public bool innerLM = false;
 
-    public Vertex2(Point64 p64)
+    public Vertex2(Point p64)
     {
       pt = p64;
       edges. Capacity = 2;
@@ -278,7 +280,7 @@ namespace Clipper2Lib
 
         // excluding horizontals, if pv.edges contains two edges
         // that are collinear and share the same bottom coords
-        // but have different lengths, split the longer edge at
+        // but have different lengths, split the inter edge at
         // the top of the shorter edge ...
         for (int iE = 0; iE < v1.edges.Count; ++iE)
         {
@@ -301,19 +303,19 @@ namespace Clipper2Lib
       }
     }
 
-    private void SplitEdge(Edge longE, Edge shortE)
+    private void SplitEdge(Edge intE, Edge shortE)
     {
-      Vertex2 oldT = longE.vT;
+      Vertex2 oldT = intE.vT;
       Vertex2 newT = shortE.vT;
 
-      RemoveEdgeFromVertex(oldT, longE);
+      RemoveEdgeFromVertex(oldT, intE);
 
-      longE.vT = newT;
-      if (longE.vL == oldT) longE.vL = newT; else longE.vR = newT;
+      intE.vT = newT;
+      if (intE.vL == oldT) intE.vL = newT; else intE.vR = newT;
 
-      newT.edges.Add(longE);
+      newT.edges.Add(intE);
 
-      CreateEdge(newT, oldT, longE.kind);
+      CreateEdge(newT, oldT, intE.kind);
     }
 
     private bool RemoveIntersection(Edge e1, Edge e2)
@@ -321,8 +323,8 @@ namespace Clipper2Lib
       Vertex2 v = e1.vL;
       Edge tmpE = e2;
 
-      double d = ShortestDistFromSegment(e1.vL.pt, e2.vL.pt, e2.vR.pt);
-      double d2 = ShortestDistFromSegment(e1.vR.pt, e2.vL.pt, e2.vR.pt);
+      float d = ShortestDistFromSegment(e1.vL.pt, e2.vL.pt, e2.vR.pt);
+      float d2 = ShortestDistFromSegment(e1.vR.pt, e2.vL.pt, e2.vR.pt);
       if (d2 < d) { d = d2; v = e1.vR; }
 
       d2 = ShortestDistFromSegment(e2.vL.pt, e1.vL.pt, e1.vR.pt);
@@ -474,7 +476,7 @@ namespace Clipper2Lib
       if (InternalClipper.CrossProductSign(vertA.pt, edge.vL.pt, edge.vR.pt) == 0)
         return;
 
-      double ictResult = InCircleTest(vertA.pt, edge.vL.pt, edge.vR.pt, vertB.pt);
+      float ictResult = InCircleTest(vertA.pt, edge.vL.pt, edge.vR.pt, vertB.pt);
       if (ictResult == 0 ||
           (RightTurning(vertA.pt, edge.vL.pt, edge.vR.pt) == (ictResult < 0)))
         return;
@@ -523,12 +525,12 @@ namespace Clipper2Lib
     {
       if (firstActive == null) return null;
 
-      long xAbove = vAbove.pt.X;
-      long yAbove = vAbove.pt.Y;
+      int xAbove = vAbove.pt.X;
+      int yAbove = vAbove.pt.Y;
 
       Edge? e = firstActive;
       Edge? eBelow = null;
-      double bestD = -1.0;
+      float bestD = -1.0f;
 
       while (e != null)
       {
@@ -536,7 +538,7 @@ namespace Clipper2Lib
             e.vB.pt.Y >= yAbove && e.vB != vAbove && e.vT != vAbove &&
             !LeftTurning(e.vL.pt, vAbove.pt, e.vR.pt))
         {
-          double d = ShortestDistFromSegment(vAbove.pt, e.vL.pt, e.vR.pt);
+          float d = ShortestDistFromSegment(vAbove.pt, e.vL.pt, e.vR.pt);
           if (eBelow == null || d < bestD)
           {
             eBelow = e;
@@ -549,8 +551,8 @@ namespace Clipper2Lib
       if (eBelow == null) return null;
 
       Vertex2 vBest = (eBelow.vT.pt.Y <= yAbove) ? eBelow.vB : eBelow.vT;
-      long xBest = vBest.pt.X;
-      long yBest = vBest.pt.Y;
+      int xBest = vBest.pt.X;
+      int yBest = vBest.pt.Y;
 
       e = firstActive;
       if (xBest < xAbove)
@@ -589,8 +591,8 @@ namespace Clipper2Lib
 
     private Edge? HorizontalBetween(Vertex2 v1, Vertex2 v2)
     {
-      long y = v1.pt.Y;
-      long l, r;
+      int y = v1.pt.Y;
+      int l, r;
 
       if (v1.pt.X > v2.pt.X)
       {
@@ -616,7 +618,7 @@ namespace Clipper2Lib
       return res;
     }
 
-    private void DoTriangulateLeft(Edge edge, Vertex2 pivot, long minY)
+    private void DoTriangulateLeft(Edge edge, Vertex2 pivot, int minY)
     {
       Vertex2? vAlt = null;
       Edge? eAlt = null;
@@ -669,7 +671,7 @@ namespace Clipper2Lib
         DoTriangulateLeft(eX, vAlt, minY);
     }
 
-    private void DoTriangulateRight(Edge edge, Vertex2 pivot, long minY)
+    private void DoTriangulateRight(Edge edge, Vertex2 pivot, int minY)
     {
       Vertex2? vAlt = null;
       Edge? eAlt = null;
@@ -803,7 +805,7 @@ namespace Clipper2Lib
 
       MergeDupOrCollinearVertices();
 
-      long currY = allVertices[0].pt.Y;
+      int currY = allVertices[0].pt.Y;
 
       foreach (Vertex2 v in allVertices)
       {
@@ -943,12 +945,12 @@ namespace Clipper2Lib
       return e.vB.pt.Y == e.vT.pt.Y;
     }
 
-    private static bool LeftTurning(in Point64 p1, in Point64 p2, in Point64 p3)
+    private static bool LeftTurning(in Point p1, in Point p2, in Point p3)
     {
       return InternalClipper.CrossProductSign(p1, p2, p3) < 0;
     }
 
-    private static bool RightTurning(in Point64 p1, in Point64 p2, in Point64 p3)
+    private static bool RightTurning(in Point p1, in Point p2, in Point p3)
     {
       return InternalClipper.CrossProductSign(p1, p2, p3) > 0;
     }
@@ -967,18 +969,18 @@ namespace Clipper2Lib
       return EdgeContainsResult.neither;
     }
 
-    private static double GetAngle(in Point64 a, in Point64 b, in Point64 c)
+    private static float GetAngle(in Point a, in Point b, in Point c)
     {
-      double abx = (double) (b.X - a.X);
-      double aby = (double) (b.Y - a.Y);
-      double bcx = (double) (b.X - c.X);
-      double bcy = (double) (b.Y - c.Y);
-      double dp = abx * bcx + aby * bcy;
-      double cp = abx * bcy - aby * bcx;
-      return Math.Atan2(cp, dp);
+      float abx = (float) (b.X - a.X);
+      float aby = (float) (b.Y - a.Y);
+      float bcx = (float) (b.X - c.X);
+      float bcy = (float) (b.Y - c.Y);
+      float dp = abx * bcx + aby * bcy;
+      float cp = abx * bcy - aby * bcx;
+      return MathF.Atan2(cp, dp);
     }
 
-    private static double GetLocMinAngle(Vertex2 v)
+    private static float GetLocMinAngle(Vertex2 v)
     {
       int asc, des;
       if (v.edges[0].kind == EdgeKind.ascend)
@@ -1066,35 +1068,35 @@ namespace Clipper2Lib
       return res;
     }
 
-    private static double InCircleTest(in Point64 ptA, in Point64 ptB, in Point64 ptC, in Point64 ptD)
+    private static float InCircleTest(in Point ptA, in Point ptB, in Point ptC, in Point ptD)
     {
-      double m00 = (double) (ptA.X - ptD.X);
-      double m01 = (double) (ptA.Y - ptD.Y);
-      double m02 = Sqr(m00) + Sqr(m01);
+      float m00 = (float) (ptA.X - ptD.X);
+      float m01 = (float) (ptA.Y - ptD.Y);
+      float m02 = Sqr(m00) + Sqr(m01);
 
-      double m10 = (double) (ptB.X - ptD.X);
-      double m11 = (double) (ptB.Y - ptD.Y);
-      double m12 = Sqr(m10) + Sqr(m11);
+      float m10 = (float) (ptB.X - ptD.X);
+      float m11 = (float) (ptB.Y - ptD.Y);
+      float m12 = Sqr(m10) + Sqr(m11);
 
-      double m20 = (double) (ptC.X - ptD.X);
-      double m21 = (double) (ptC.Y - ptD.Y);
-      double m22 = Sqr(m20) + Sqr(m21);
+      float m20 = (float) (ptC.X - ptD.X);
+      float m21 = (float) (ptC.Y - ptD.Y);
+      float m22 = Sqr(m20) + Sqr(m21);
 
       return m00 * (m11 * m22 - m21 * m12) -
              m10 * (m01 * m22 - m21 * m02) +
              m20 * (m01 * m12 - m11 * m02);
     }
 
-    private static double ShortestDistFromSegment(in Point64 pt, in Point64 segPt1, in Point64 segPt2)
+    private static float ShortestDistFromSegment(in Point pt, in Point segPt1, in Point segPt2)
     {
-      double dx = (double) (segPt2.X - segPt1.X);
-      double dy = (double) (segPt2.Y - segPt1.Y);
+      float dx = (float) (segPt2.X - segPt1.X);
+      float dy = (float) (segPt2.Y - segPt1.Y);
 
-      double ax = (double) (pt.X - segPt1.X);
-      double ay = (double) (pt.Y - segPt1.Y);
+      float ax = (float) (pt.X - segPt1.X);
+      float ay = (float) (pt.Y - segPt1.Y);
 
-      double qNum = ax * dx + ay * dy;
-      double denom = Sqr(dx) + Sqr(dy);
+      float qNum = ax * dx + ay * dy;
+      float denom = Sqr(dx) + Sqr(dy);
 
       if (qNum < 0)
         return DistanceSqr(pt, segPt1);
@@ -1104,18 +1106,18 @@ namespace Clipper2Lib
       return Sqr(ax * dy - dx * ay) / denom;
     }
 
-    private static IntersectKind SegsIntersect(Point64 s1a, Point64 s1b, Point64 s2a, Point64 s2b)
+    private static IntersectKind SegsIntersect(Point s1a, Point s1b, Point s2a, Point s2b)
     {
-      double dy1 = (double) (s1b.Y - s1a.Y);
-      double dx1 = (double) (s1b.X - s1a.X);
-      double dy2 = (double) (s2b.Y - s2a.Y);
-      double dx2 = (double) (s2b.X - s2a.X);
+      float dy1 = (float) (s1b.Y - s1a.Y);
+      float dx1 = (float) (s1b.X - s1a.X);
+      float dy2 = (float) (s2b.Y - s2a.Y);
+      float dx2 = (float) (s2b.X - s2a.X);
 
-      double cp = dy1 * dx2 - dy2 * dx1;
+      float cp = dy1 * dx2 - dy2 * dx1;
       if (cp == 0) return IntersectKind.collinear;
 
-      double t = ((double) (s1a.X - s2a.X) * dy2 -
-                  (double) (s1a.Y - s2a.Y) * dx2);
+      float t = ((float) (s1a.X - s2a.X) * dy2 -
+                  (float) (s1a.Y - s2a.Y) * dx2);
 
       if (t == 0) return IntersectKind.none;
       if (t > 0)
@@ -1127,8 +1129,8 @@ namespace Clipper2Lib
         if (cp > 0 || t <= cp) return IntersectKind.none;
       }
 
-      t = ((double) (s1a.X - s2a.X) * dy1 -
-           (double) (s1a.Y - s2a.Y) * dx1);
+      t = ((float) (s1a.X - s2a.X) * dy1 -
+           (float) (s1a.Y - s2a.Y) * dx1);
 
       if (t == 0) return IntersectKind.none;
       if (t > 0)
@@ -1143,22 +1145,22 @@ namespace Clipper2Lib
       return IntersectKind.none;
     }
 
-    private static double DistSqr(in Point64 pt1, in Point64 pt2)
+    private static float DistSqr(in Point pt1, in Point pt2)
     {
-      return Sqr((double) (pt1.X - pt2.X)) + Sqr((double) (pt1.Y - pt2.Y));
+      return Sqr((float) (pt1.X - pt2.X)) + Sqr((float) (pt1.Y - pt2.Y));
     }
 
     // These are placeholders to be wired to your Clipper2 C# math helpers.
     // Replace with actual implementations if different.
-    private static double Sqr(double v)
+    private static float Sqr(float v)
     {
       return v * v;
     }
 
-    private static double DistanceSqr(in Point64 a, in Point64 b)
+    private static float DistanceSqr(in Point a, in Point b)
     {
-      double dx = (double) (a.X - b.X);
-      double dy = (double) (a.Y - b.Y);
+      float dx = (float) (a.X - b.X);
+      float dy = (float) (a.Y - b.Y);
       return dx * dx + dy * dy;
     }
   }

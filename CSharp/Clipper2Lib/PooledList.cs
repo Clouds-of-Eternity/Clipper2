@@ -9,10 +9,12 @@
 * License   :  http://www.boost.org/LICENSE_1_0.txt                            *
 *******************************************************************************/
 
+#nullable enable
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using EternityWorks;
 
 namespace Clipper2Lib
 {
@@ -22,7 +24,7 @@ namespace Clipper2Lib
   internal class VertexPoolList : PooledList<Vertex>
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Vertex Add(Point64 point, VertexFlags flags, Vertex? prev)
+    public Vertex Add(Point point, VertexFlags flags, Vertex? prev)
     {
       TryGrow();
       Vertex poolVtx = _items[_size];
@@ -52,7 +54,7 @@ namespace Clipper2Lib
     public static bool UseOutPtPool = true;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public OutPt Add(Point64 pt, OutRec outrec)
+    public OutPt Add(Point pt, OutRec outrec)
     {
       TryGrow();
       OutPt poolPt = _items[_size];

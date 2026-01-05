@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
+#nullable enable
 namespace Clipper2Lib
 {
   /*
