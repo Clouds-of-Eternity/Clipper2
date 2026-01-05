@@ -16,16 +16,8 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-#if USINGZ
-namespace Clipper2ZLib
-#else
 namespace Clipper2Lib
-#endif
 {
-
-  // PRE-COMPILER CONDITIONAL ...
-  // USINGZ: For user defined Z-coordinates. See Clipper.SetZ
-
   public static class Clipper
   {
     private static Rect64 invalidRect64 = new Rect64(false);
@@ -346,10 +338,7 @@ namespace Clipper2Lib
       Point64 result = new Point64()
       {
         X = (long) Math.Round(pt.X * scale, MidpointRounding.AwayFromZero),
-        Y = (long) Math.Round(pt.Y * scale, MidpointRounding.AwayFromZero),
-#if USINGZ
-        Z = pt.Z
-#endif
+        Y = (long) Math.Round(pt.Y * scale, MidpointRounding.AwayFromZero)
       };
       return result;
     }
@@ -360,10 +349,7 @@ namespace Clipper2Lib
       PointD result = new PointD()
       {
         x = pt.X * scale,
-        y = pt.Y * scale,
-#if USINGZ
-        z = pt.Z,
-#endif
+        y = pt.Y * scale
       };
       return result;
     }
@@ -386,13 +372,8 @@ namespace Clipper2Lib
     {
       if (InternalClipper.IsAlmostZero(scale - 1)) return path;
       Path64 result = new Path64(path.Count);
-#if USINGZ
-      foreach (Point64 pt in path)
-        result.Add(new Point64(pt.X * scale, pt.Y * scale, pt.Z));
-#else
       foreach (Point64 pt in path)
         result.Add(new Point64(pt.X * scale, pt.Y * scale));
-#endif
       return result;
     }
 
@@ -636,25 +617,6 @@ namespace Clipper2Lib
         p.Add(new PointD(arr[i * 2], arr[i * 2 + 1]));
       return p;
     }
-
-#if USINGZ
-    public static Path64 MakePathZ(long[] arr)
-    {
-      int len = arr.Length / 3;
-      Path64 p = new Path64(len);
-      for (int i = 0; i < len; i++)
-        p.Add(new Point64(arr[i * 3], arr[i * 3 + 1], arr[i * 3 + 2]));
-      return p;
-    }
-    public static PathD MakePathZ(double[] arr)
-    {
-      int len = arr.Length / 3;
-      PathD p = new PathD(len);
-      for (int i = 0; i < len; i++)
-        p.Add(new PointD(arr[i * 3], arr[i * 3 + 1], (long)arr[i * 3 + 2]));
-      return p;
-    }
-#endif
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

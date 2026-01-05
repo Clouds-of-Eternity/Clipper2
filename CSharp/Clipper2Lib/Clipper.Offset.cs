@@ -11,11 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-#if USINGZ
-namespace Clipper2ZLib
-#else
 namespace Clipper2Lib
-#endif
 {
   public enum JoinType
   {
@@ -112,18 +108,6 @@ namespace Clipper2Lib
       PathD path_norms, int currPt, int prevPt);
     public DeltaCallback64? DeltaCallback { get; set; }
 
-#if USINGZ
-    internal void ZCB(Point64 bot1, Point64 top1,
-        Point64 bot2, Point64 top2, ref Point64 ip)
-    {
-      if (bot1.Z != 0 &&
-        ((bot1.Z == bot2.Z) || (bot1.Z == top2.Z))) ip.Z = bot1.Z;
-      else if (bot2.Z != 0 && bot2.Z == top1.Z) ip.Z = bot2.Z;
-      else if (top1.Z != 0 && top1.Z == top2.Z) ip.Z = top1.Z;
-      else ZCallback?.Invoke(bot1, top1, bot2, top2, ref ip);
-    }
-    public ClipperBase.ZCallback64? ZCallback { get; set; }
-#endif
     public ClipperOffset(double miterLimit = 2.0,
       double arcTolerance = 0.0, bool
       preserveCollinear = false, bool reverseSolution = false)
@@ -133,9 +117,6 @@ namespace Clipper2Lib
       MergeGroups = true;
       PreserveCollinear = preserveCollinear;
       ReverseSolution = reverseSolution;
-#if USINGZ
-      ZCallback = null;
-#endif
     }
     public void Clear()
     {
@@ -207,9 +188,6 @@ namespace Clipper2Lib
       Clipper64 c = new Clipper64();
       c.PreserveCollinear = PreserveCollinear;
       c.ReverseSolution = ReverseSolution != pathsReversed;
-#if USINGZ
-      c.ZCallback = ZCB;
-#endif
       c.AddSubject(_solution);
       if (_solutionTree != null)
         c.Execute(ClipType.Union, fillRule, _solutionTree);
@@ -282,21 +260,13 @@ namespace Clipper2Lib
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static PointD TranslatePoint(PointD pt, double dx, double dy)
     {
-#if USINGZ
-      return new PointD(pt.x + dx, pt.y + dy, pt.z);
-#else
       return new PointD(pt.x + dx, pt.y + dy);
-#endif
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static PointD ReflectPoint(PointD pt, PointD pivot)
     {
-#if USINGZ
-      return new PointD(pivot.x + (pivot.x - pt.x), pivot.y + (pivot.y - pt.y), pt.z);
-#else
       return new PointD(pivot.x + (pivot.x - pt.x), pivot.y + (pivot.y - pt.y));
-#endif
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -330,25 +300,15 @@ namespace Clipper2Lib
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Point64 GetPerpendic(Point64 pt, PointD norm)
     {
-#if USINGZ
-      return new Point64(pt.X + norm.x * _groupDelta,
-        pt.Y + norm.y * _groupDelta, pt.Z);
-#else
       return new Point64(pt.X + norm.x * _groupDelta,
         pt.Y + norm.y * _groupDelta);
-#endif
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private PointD GetPerpendicD(Point64 pt, PointD norm)
     {
-#if USINGZ
-      return new PointD(pt.X + norm.x * _groupDelta,
-        pt.Y + norm.y * _groupDelta, pt.Z);
-#else
       return new PointD(pt.X + norm.x * _groupDelta,
         pt.Y + norm.y * _groupDelta);
-#endif
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -358,39 +318,21 @@ namespace Clipper2Lib
       if (j == k)
       {
         double absDelta = Math.Abs(_groupDelta);
-#if USINGZ
-        pt1 = new Point64(
-          path[j].X - absDelta * _normals[j].x, 
-          path[j].Y - absDelta * _normals[j].y, path[j].Z);
-        pt2 = new Point64(
-          path[j].X + absDelta * _normals[j].x, 
-          path[j].Y + absDelta * _normals[j].y, path[j].Z);
-#else
         pt1 = new Point64(
           path[j].X - absDelta * _normals[j].x,
           path[j].Y - absDelta * _normals[j].y);
         pt2 = new Point64(
           path[j].X + absDelta * _normals[j].x,
           path[j].Y + absDelta * _normals[j].y);
-#endif
       }
       else
       {
-#if USINGZ
-        pt1 = new Point64(
-          path[j].X + _groupDelta * _normals[k].x,
-          path[j].Y + _groupDelta * _normals[k].y, path[j].Z);
-        pt2 = new Point64(
-          path[j].X + _groupDelta * _normals[j].x,
-          path[j].Y + _groupDelta * _normals[j].y, path[j].Z);
-#else
         pt1 = new Point64(
           path[j].X + _groupDelta * _normals[k].x,
           path[j].Y + _groupDelta * _normals[k].y);
         pt2 = new Point64(
           path[j].X + _groupDelta * _normals[j].x,
           path[j].Y + _groupDelta * _normals[j].y);
-#endif
       }
       pathOut.Add(pt1);
       pathOut.Add(pt2);
@@ -428,9 +370,6 @@ namespace Clipper2Lib
           pt3.x + vec.x * _groupDelta,
           pt3.y + vec.y * _groupDelta);
         InternalClipper.GetLineIntersectPt(pt1, pt2, pt3, pt4, out PointD pt);
-#if USINGZ
-        pt.z = ptQ.z;
-#endif    
         //get the second intersect point through reflecion
         pathOut.Add(new Point64(ReflectPoint(pt, ptQ)));
         pathOut.Add(new Point64(pt));
@@ -439,9 +378,6 @@ namespace Clipper2Lib
       {
         PointD pt4 = GetPerpendicD(path[j], _normals[k]);
         InternalClipper.GetLineIntersectPt(pt1, pt2, pt3, pt4, out PointD pt);
-#if USINGZ
-        pt.z = ptQ.z;
-#endif
         pathOut.Add(new Point64(pt));
         //get the second intersect point through reflecion
         pathOut.Add(new Point64(ReflectPoint(pt, ptQ)));
@@ -452,16 +388,9 @@ namespace Clipper2Lib
     private void DoMiter(Path64 path, int j, int k, double cosA)
     {
       double q = _groupDelta / (cosA + 1);
-#if USINGZ
-      pathOut.Add(new Point64(
-          path[j].X + (_normals[k].x + _normals[j].x) * q,
-          path[j].Y + (_normals[k].y + _normals[j].y) * q,
-          path[j].Z));
-#else
       pathOut.Add(new Point64(
           path[j].X + (_normals[k].x + _normals[j].x) * q,
           path[j].Y + (_normals[k].y + _normals[j].y) * q));
-#endif
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -483,21 +412,13 @@ namespace Clipper2Lib
       Point64 pt = path[j];
       PointD offsetVec = new PointD(_normals[k].x * _groupDelta, _normals[k].y * _groupDelta);
       if (j == k) offsetVec.Negate();
-#if USINGZ
-      pathOut.Add(new Point64(pt.X + offsetVec.x, pt.Y + offsetVec.y, pt.Z));
-#else
       pathOut.Add(new Point64(pt.X + offsetVec.x, pt.Y + offsetVec.y));
-#endif
       int steps = (int) Math.Ceiling(_stepsPerRad * Math.Abs(angle));
       for (int i = 1; i < steps; i++) // ie 1 less than steps
       {
         offsetVec = new PointD(offsetVec.x * _stepCos - _stepSin * offsetVec.y,
             offsetVec.x * _stepSin + offsetVec.y * _stepCos);
-#if USINGZ
-        pathOut.Add(new Point64(pt.X + offsetVec.x, pt.Y + offsetVec.y, pt.Z));
-#else
         pathOut.Add(new Point64(pt.X + offsetVec.x, pt.Y + offsetVec.y));
-#endif
       }
       pathOut.Add(GetPerpendic(pt, _normals[j]));
     }
@@ -710,18 +631,12 @@ namespace Clipper2Lib
             {
               int steps = (int) Math.Ceiling(_stepsPerRad * 2 * Math.PI);
               pathOut = Clipper.Ellipse(pt, absDelta, absDelta, steps);
-#if USINGZ
-            pathOut = InternalClipper.SetZ(pathOut, pt.Z);
-#endif
             }
             else
             {
               int d = (int) Math.Ceiling(_groupDelta);
               Rect64 r = new Rect64(pt.X - d, pt.Y - d, pt.X + d, pt.Y + d);
               pathOut = r.AsPath();
-#if USINGZ
-            pathOut = InternalClipper.SetZ(pathOut, pt.Z);
-#endif
             }
             _solution.Add(pathOut);
             continue; // end of offsetting a single point 

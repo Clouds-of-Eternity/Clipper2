@@ -11,11 +11,7 @@
 using System;
 using System.Collections.Generic;
 
-#if USINGZ
-namespace Clipper2ZLib
-#else
 namespace Clipper2Lib
-#endif
 {
   public enum TriangulateResult { success, fail, noPolygons, pathsIntersect }
 

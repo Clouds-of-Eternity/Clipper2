@@ -10,11 +10,7 @@
 #nullable enable
 using System;
 
-#if USINGZ
-namespace Clipper2ZLib
-#else
 namespace Clipper2Lib
-#endif
 {
   public static class Minkowski
   {
