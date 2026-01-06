@@ -102,8 +102,8 @@ namespace Clipper2Lib
         outRec.frontEdge = null;
         outRec.backEdge = null;
         outRec.pts = null;
-        outRec.bounds = new Rect64();
-        outRec.path = new Path64();
+        outRec.bounds = new Rectangle();
+        outRec.path = new PathPoint();
         outRec.polypath = null;
         outRec.isOpen = false;
         outRec.splits?.Clear();
@@ -114,7 +114,7 @@ namespace Clipper2Lib
     }
 
     //tombStone marks cleared OutRec in the pool
-    private static readonly Path64 tombStone = new Path64();
+    private static readonly PathPoint tombStone = new PathPoint();
     public override void Clear()
     {
       base.Clear();

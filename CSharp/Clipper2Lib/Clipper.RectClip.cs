@@ -36,19 +36,19 @@ namespace Clipper2Lib
       left, top, right, bottom, inside
     }
 
-    readonly protected Rect64 rect_;
+    readonly protected Rectangle rect_;
     readonly protected Point mp_;
-    readonly protected Path64 rectPath_;
-    protected Rect64 pathBounds_;
+    readonly protected PathPoint rectPath_;
+    protected Rectangle pathBounds_;
     protected List<OutPt2?> results_;
     protected List<OutPt2?>[] edges_;
     protected int currIdx_;
-    internal RectClip64(Rect64 rect)
+    internal RectClip64(Rectangle rect)
     {
       currIdx_ = -1;
       rect_ = rect;
       mp_ = rect.MidPoint();
-      rectPath_ = rect_.AsPath();
+      rectPath_ = Clipper.AsPath(rect_);
       results_ = new List<OutPt2?>();
       edges_ = new List<OutPt2?>[8];
       for (int i = 0; i < 8; i++)
@@ -87,7 +87,7 @@ namespace Clipper2Lib
       return result;
     }
 
-    private static bool Path1ContainsPath2(Path64 path1, Path64 path2)
+    private static bool Path1ContainsPath2(PathPoint path1, PathPoint path2)
     {
       // nb: occasionally, due to rounding, path1 may 
       // appear (momentarily) inside or outside path2.
@@ -155,13 +155,13 @@ namespace Clipper2Lib
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static uint GetEdgesForPt(Point pt, Rect64 rec)
+    private static uint GetEdgesForPt(Point pt, Rectangle rec)
     {
       uint result = 0;
-      if (pt.X == rec.left) result = 1;
-      else if (pt.X == rec.right) result = 4;
-      if (pt.Y == rec.top) result += 2;
-      else if (pt.Y == rec.bottom) result += 8;
+      if (pt.X == rec.Left) result = 1;
+      else if (pt.X == rec.Right) result = 4;
+      if (pt.Y == rec.Top) result += 2;
+      else if (pt.Y == rec.Bottom) result += 8;
       return result;
     }
 
@@ -244,28 +244,28 @@ namespace Clipper2Lib
       }
     }
 
-    static protected bool GetLocation(Rect64 rec, Point pt, out Location loc) 
+    static protected bool GetLocation(Rectangle rec, Point pt, out Location loc) 
     {
-      if (pt.X == rec.left && pt.Y >= rec.top && pt.Y <= rec.bottom)
+      if (pt.X == rec.Left && pt.Y >= rec.Top && pt.Y <= rec.Bottom)
       {
         loc = Location.left; return false; // pt on rec
       }
-      if (pt.X == rec.right && pt.Y >= rec.top && pt.Y <= rec.bottom)
+      if (pt.X == rec.Right && pt.Y >= rec.Top && pt.Y <= rec.Bottom)
       {
         loc = Location.right; return false; // pt on rec
       }
-      if (pt.Y == rec.top && pt.X >= rec.left && pt.X <= rec.right)
+      if (pt.Y == rec.Top && pt.X >= rec.Left && pt.X <= rec.Right)
       {
         loc = Location.top; return false; // pt on rec
       }
-      if (pt.Y == rec.bottom && pt.X >= rec.left && pt.X <= rec.right)
+      if (pt.Y == rec.Bottom && pt.X >= rec.Left && pt.X <= rec.Right)
       {
         loc = Location.bottom; return false; // pt on rec
       }
-      if (pt.X < rec.left) loc = Location.left;
-      else if (pt.X > rec.right) loc = Location.right;
-      else if (pt.Y < rec.top)  loc = Location.top; 
-      else if (pt.Y > rec.bottom) loc = Location.bottom;
+      if (pt.X < rec.Left) loc = Location.left;
+      else if (pt.X > rec.Right) loc = Location.right;
+      else if (pt.Y < rec.Top)  loc = Location.top; 
+      else if (pt.Y > rec.Bottom) loc = Location.bottom;
       else loc = Location.inside;
       return true;
     }
@@ -331,7 +331,7 @@ namespace Clipper2Lib
     }
   
 
-    static protected bool GetIntersection(Path64 rectPath, Point p, Point p2, ref Location loc, out Point ip)
+    static protected bool GetIntersection(PathPoint rectPath, Point p, Point p2, ref Location loc, out Point ip)
     {
       // gets the pt of intersection between rectPath and segment(p, p2) that's closest to 'p'
       // when result == false, loc will remain unchanged
@@ -413,51 +413,51 @@ namespace Clipper2Lib
       }
     }
 
-    protected void GetNextLocation(Path64 path,
+    protected void GetNextLocation(PathPoint path,
       ref Location loc, ref int i, int highI)
     {
       switch (loc)
       {
         case Location.left:
           {
-            while (i <= highI && path[i].X <= rect_.left) i++;
+            while (i <= highI && path[i].X <= rect_.Left) i++;
             if (i > highI) break;
-            if (path[i].X >= rect_.right) loc = Location.right;
-            else if (path[i].Y <= rect_.top) loc = Location.top;
-            else if (path[i].Y >= rect_.bottom) loc = Location.bottom;
+            if (path[i].X >= rect_.Right) loc = Location.right;
+            else if (path[i].Y <= rect_.Top) loc = Location.top;
+            else if (path[i].Y >= rect_.Bottom) loc = Location.bottom;
             else loc = Location.inside;
           }
           break;
 
         case Location.top:
           {
-            while (i <= highI && path[i].Y <= rect_.top) i++;
+            while (i <= highI && path[i].Y <= rect_.Top) i++;
             if (i > highI) break;
-            if (path[i].Y >= rect_.bottom) loc = Location.bottom;
-            else if (path[i].X <= rect_.left) loc = Location.left;
-            else if (path[i].X >= rect_.right) loc = Location.right;
+            if (path[i].Y >= rect_.Bottom) loc = Location.bottom;
+            else if (path[i].X <= rect_.Left) loc = Location.left;
+            else if (path[i].X >= rect_.Right) loc = Location.right;
             else loc = Location.inside;
           }
           break;
 
         case Location.right:
           {
-            while (i <= highI && path[i].X >= rect_.right) i++;
+            while (i <= highI && path[i].X >= rect_.Right) i++;
             if (i > highI) break;
-            if (path[i].X <= rect_.left) loc = Location.left;
-            else if (path[i].Y <= rect_.top) loc = Location.top;
-            else if (path[i].Y >= rect_.bottom) loc = Location.bottom;
+            if (path[i].X <= rect_.Left) loc = Location.left;
+            else if (path[i].Y <= rect_.Top) loc = Location.top;
+            else if (path[i].Y >= rect_.Bottom) loc = Location.bottom;
             else loc = Location.inside;
           }
           break;
 
         case Location.bottom:
           {
-            while (i <= highI && path[i].Y >= rect_.bottom) i++;
+            while (i <= highI && path[i].Y >= rect_.Bottom) i++;
             if (i > highI) break;
-            if (path[i].Y <= rect_.top) loc = Location.top;
-            else if (path[i].X <= rect_.left) loc = Location.left;
-            else if (path[i].X >= rect_.right) loc = Location.right;
+            if (path[i].Y <= rect_.Top) loc = Location.top;
+            else if (path[i].X <= rect_.Left) loc = Location.left;
+            else if (path[i].X >= rect_.Right) loc = Location.right;
             else loc = Location.inside;
           }
           break;
@@ -466,10 +466,10 @@ namespace Clipper2Lib
           {
             while (i <= highI)
             {
-              if (path[i].X < rect_.left) loc = Location.left;
-              else if (path[i].X > rect_.right) loc = Location.right;
-              else if (path[i].Y > rect_.bottom) loc = Location.bottom;
-              else if (path[i].Y < rect_.top) loc = Location.top;
+              if (path[i].X < rect_.Left) loc = Location.left;
+              else if (path[i].X > rect_.Right) loc = Location.right;
+              else if (path[i].Y > rect_.Bottom) loc = Location.bottom;
+              else if (path[i].Y < rect_.Top) loc = Location.top;
               else
               {
                 Add(path[i]);
@@ -500,9 +500,9 @@ namespace Clipper2Lib
       return result > 0;
     }
 
-    private void ExecuteInternal(Path64 path)
+    private void ExecuteInternal(PathPoint path)
     {
-      if (path.Count < 3 || rect_.IsEmpty()) return;      
+      if (path.Count < 3 || rect_.width <= 0 || rect_.height <= 0) return;      
       List<Location> startLocs = new List<Location>();
       
       Location firstCross = Location.inside;
@@ -651,11 +651,11 @@ namespace Clipper2Lib
       }
     }
 
-    public Paths64 Execute(Paths64 paths)
+    public PathsPoint Execute(PathsPoint paths)
     {
-      Paths64 result = new Paths64();
-      if (rect_.IsEmpty()) return result;
-      foreach (Path64 path in paths)
+      PathsPoint result = new PathsPoint();
+      if (rect_.width <= 0 || rect_.height <= 0) return result;
+      foreach (PathPoint path in paths)
       {
         if (path.Count < 3) continue;
         pathBounds_ = Clipper.GetBounds(path);
@@ -674,7 +674,7 @@ namespace Clipper2Lib
 
         foreach (OutPt2? op in results_)
         {
-          Path64 tmp = GetPath(op);
+          PathPoint tmp = GetPath(op);
           if (tmp.Count > 0) result.Add(tmp);
         }
 
@@ -925,9 +925,9 @@ namespace Clipper2Lib
       }
     }
 
-    private static Path64 GetPath(OutPt2? op)
+    private static PathPoint GetPath(OutPt2? op)
     { 
-      Path64 result = new Path64();
+      PathPoint result = new PathPoint();
       if (op == null || op.prev == op.next) return result;
       OutPt2? op2 = op.next;
       while (op2 != null && op2 != op)
@@ -941,7 +941,7 @@ namespace Clipper2Lib
         else
           op2 = op2.next;
       }
-      if (op2 == null) return new Path64();
+      if (op2 == null) return new PathPoint();
 
       result.Add(op.pt);
       op2 = op.next;
@@ -957,13 +957,13 @@ namespace Clipper2Lib
 
   public class RectClipLines64 : RectClip64
   {
-    internal RectClipLines64(Rect64 rect) : base(rect) { }
+    internal RectClipLines64(Rectangle rect) : base(rect) { }
 
-    public new Paths64 Execute(Paths64 paths)
+    public new PathsPoint Execute(PathsPoint paths)
     {
-      Paths64 result = new Paths64();
-      if (rect_.IsEmpty()) return result;
-      foreach (Path64 path in paths)
+      PathsPoint result = new PathsPoint();
+      if (rect_.width <= 0 || rect_.height <= 0) return result;
+      foreach (PathPoint path in paths)
       {
         if (path.Count < 2) continue;
         pathBounds_ = Clipper.GetBounds(path);
@@ -976,7 +976,7 @@ namespace Clipper2Lib
 
         foreach (OutPt2? op in results_)
         {
-          Path64 tmp = GetPath(op);
+          PathPoint tmp = GetPath(op);
           if (tmp.Count > 0) result.Add(tmp);
         }
 
@@ -988,9 +988,9 @@ namespace Clipper2Lib
       return result;
     }
 
-    private static Path64 GetPath(OutPt2? op)
+    private static PathPoint GetPath(OutPt2? op)
     {
-      Path64 result = new Path64();
+      PathPoint result = new PathPoint();
       if (op == null || op == op.next) return result;
       op = op.next; // starting at path beginning 
       result.Add(op!.pt);
@@ -1003,10 +1003,10 @@ namespace Clipper2Lib
       return result;
     }
 
-    private void ExecuteInternal(Path64 path)
+    private void ExecuteInternal(PathPoint path)
     {
       results_.Clear();
-      if (path.Count < 2 || rect_.IsEmpty()) return;
+      if (path.Count < 2 || rect_.width <= 0 || rect_.height <= 0) return;
 
       Location prev = Location.inside;
       int i = 1, highI = path.Count - 1;

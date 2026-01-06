@@ -148,8 +148,8 @@ namespace Clipper2Lib
     public Active? backEdge;
     public OutPt? pts;
     public PolyPathBase? polypath;
-    public Rect64 bounds;
-    public Path64 path = new Path64();
+    public Rectangle bounds;
+    public PathPoint path = new PathPoint();
     public bool isOpen;
     public List<int>? splits;
     public OutRec? recursiveSplit;
@@ -234,14 +234,14 @@ namespace Clipper2Lib
         list.Capacity = minCapacity;
     }
 
-    internal static void AddPathsToVertexList(Paths64 paths, PathType polytype, bool isOpen,
+    internal static void AddPathsToVertexList(PathsPoint paths, PathType polytype, bool isOpen,
       List<LocalMinima> minimaList, VertexPoolList vertexList)
     {
       int totalVertCnt = 0;
-      foreach (Path64 path in paths) totalVertCnt += path.Count;
+      foreach (PathPoint path in paths) totalVertCnt += path.Count;
       vertexList.EnsureCapacity(vertexList.Count + totalVertCnt);
 
-      foreach (Path64 path in paths)
+      foreach (PathPoint path in paths)
       {
         Vertex? v0 = null, prev_v = null, curr_v;
         foreach (Point pt in path)
@@ -341,7 +341,7 @@ namespace Clipper2Lib
       _vertexList.Clear();
     }
 
-    public void AddPaths(Paths64 paths, PathType pt, bool isOpen)
+    public void AddPaths(PathsPoint paths, PathType pt, bool isOpen)
     {
       ClipperEngine.AddPathsToVertexList(paths, pt, isOpen, _minimaList, _vertexList);
     }
@@ -786,32 +786,32 @@ namespace Clipper2Lib
     }
    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddSubject(Path64 path)
+    public void AddSubject(PathPoint path)
     {
       AddPath(path, PathType.Subject);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddOpenSubject(Path64 path)
+    public void AddOpenSubject(PathPoint path)
     {
       AddPath(path, PathType.Subject, true);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddClip(Path64 path)
+    public void AddClip(PathPoint path)
     {
       AddPath(path, PathType.Clip);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected void AddPath(Path64 path, PathType polytype, bool isOpen = false)
+    protected void AddPath(PathPoint path, PathType polytype, bool isOpen = false)
     {
-      Paths64 tmp = new Paths64(1) { path };
+      PathsPoint tmp = new PathsPoint(1) { path };
       AddPaths(tmp, polytype, isOpen);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected void AddPaths(Paths64 paths, PathType polytype, bool isOpen = false)
+    protected void AddPaths(PathsPoint paths, PathType polytype, bool isOpen = false)
     {
       if (isOpen) _hasOpenPaths = true;
       _isSortedMinimaList = false;
@@ -2527,9 +2527,9 @@ private void DoHorizontal(Active horz)
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Path64 GetCleanPath(OutPt op)
+    private static PathPoint GetCleanPath(OutPt op)
     {
-      Path64 result = new Path64();
+      PathPoint result = new PathPoint();
       OutPt op2 = op;
       while (op2.next != op &&
         ((op2.pt.X == op2.next!.pt.X && op2.pt.X == op2.prev.pt.X) ||
@@ -2899,7 +2899,7 @@ private void DoHorizontal(Active horz)
       }
     }
 
-    internal static bool BuildPath(OutPt? op, bool reverse, bool isOpen, Path64 path)
+    internal static bool BuildPath(OutPt? op, bool reverse, bool isOpen, PathPoint path)
     {
       if (op == null || op.next == op || (!isOpen && op.next == op.prev)) return false;
       path.Clear();
@@ -2935,7 +2935,7 @@ private void DoHorizontal(Active horz)
       return path.Count != 3 || isOpen || !IsVerySmallTriangle(op2);
     }
 
-    protected bool BuildPaths(Paths64 solutionClosed, Paths64 solutionOpen)
+    protected bool BuildPaths(PathsPoint solutionClosed, PathsPoint solutionOpen)
     {
       solutionClosed.Clear();
       solutionOpen.Clear();
@@ -2950,7 +2950,7 @@ private void DoHorizontal(Active horz)
         OutRec outrec = _outrecList[i++];
         if (outrec.pts == null) continue;
 
-        Path64 path = new Path64(outrec.outPtCount);
+        PathPoint path = new PathPoint(outrec.outPtCount);
         if (outrec.isOpen)
         {
           if (BuildPath(outrec.pts, ReverseSolution, true, path))
@@ -2972,7 +2972,7 @@ private void DoHorizontal(Active horz)
     private bool CheckBounds(OutRec outrec)
     {
       if (outrec.pts == null) return false;
-      if (!outrec.bounds.IsEmpty()) return true;
+      if (!(outrec.bounds.width <= 0 || outrec.bounds.height <= 0)) return true;
       CleanCollinear(outrec);
       if (outrec.pts == null ||
         !BuildPath(outrec.pts, ReverseSolution, false, outrec.path))
@@ -3012,7 +3012,7 @@ private void DoHorizontal(Active horz)
       // pre-condition: outrec will have valid bounds
       // post-condition: if a valid path, outrec will have a polypath
 
-      if (outrec.polypath != null || outrec.bounds.IsEmpty()) return;
+      if (outrec.polypath != null || outrec.bounds.width <= 0 || outrec.bounds.height <= 0) return;
 
       while (outrec.owner != null)
       {
@@ -3033,7 +3033,7 @@ private void DoHorizontal(Active horz)
         outrec.polypath = polypath.AddChild(outrec.path);
     }
 
-    protected void BuildTree(PolyPathBase polytree, Paths64 solutionOpen)
+    protected void BuildTree(PolyPathBase polytree, PathsPoint solutionOpen)
     {
       polytree.Clear();
       solutionOpen.Clear();
@@ -3051,7 +3051,7 @@ private void DoHorizontal(Active horz)
 
         if (outrec.isOpen)
         {
-          Path64 open_path = new Path64(outrec.outPtCount);
+          PathPoint open_path = new PathPoint(outrec.outPtCount);
           if (BuildPath(outrec.pts, ReverseSolution, true, open_path))
             solutionOpen.Add(open_path);
           continue;
@@ -3063,22 +3063,22 @@ private void DoHorizontal(Active horz)
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Rect64 GetBounds()
+    public Rectangle GetBounds()
     {
-      Rect64 bounds = Clipper.InvalidRect64;
+      Rectangle bounds = Clipper.InvalidRectangle;
       foreach (Vertex t in _vertexList)
       {
         Vertex v = t;
         do
         {
-          if (v.pt.X < bounds.left) bounds.left = v.pt.X;
-          if (v.pt.X > bounds.right) bounds.right = v.pt.X;
-          if (v.pt.Y < bounds.top) bounds.top = v.pt.Y;
-          if (v.pt.Y > bounds.bottom) bounds.bottom = v.pt.Y;
+          if (v.pt.X < bounds.Left) bounds.X = v.pt.X;
+          if (v.pt.X > bounds.Right) bounds.width = v.pt.X - bounds.X;
+          if (v.pt.Y < bounds.Top) bounds.Y = v.pt.Y;
+          if (v.pt.Y > bounds.Bottom) bounds.height = v.pt.Y - bounds.Y;
           v = v.next!;
         } while (v != t);
       }
-      return bounds.IsEmpty() ? new Rect64(0, 0, 0, 0) : bounds;
+      return (bounds.width <= 0 || bounds.height <= 0) ? new Rectangle(0, 0, 0, 0) : bounds;
     }
 
   } // ClipperBase class
@@ -3087,7 +3087,7 @@ private void DoHorizontal(Active horz)
   public class Clipper64 : ClipperBase
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal new void AddPath(Path64 path, PathType polytype, bool isOpen = false)
+    internal new void AddPath(PathPoint path, PathType polytype, bool isOpen = false)
     {
       base.AddPath(path, polytype, isOpen);
     }
@@ -3099,31 +3099,31 @@ private void DoHorizontal(Active horz)
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal new void AddPaths(Paths64 paths, PathType polytype, bool isOpen = false)
+    internal new void AddPaths(PathsPoint paths, PathType polytype, bool isOpen = false)
     {
       base.AddPaths(paths, polytype, isOpen);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddSubject(Paths64 paths)
+    public void AddSubject(PathsPoint paths)
     {
       AddPaths(paths, PathType.Subject);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddOpenSubject(Paths64 paths)
+    public void AddOpenSubject(PathsPoint paths)
     {
       AddPaths(paths, PathType.Subject, true);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddClip(Paths64 paths)
+    public void AddClip(PathsPoint paths)
     {
       AddPaths(paths, PathType.Clip);
     }
 
     public bool Execute(ClipType clipType, FillRule fillRule,
-        Paths64 solutionClosed, Paths64 solutionOpen)
+        PathsPoint solutionClosed, PathsPoint solutionOpen)
     {
       solutionClosed.Clear();
       solutionOpen.Clear();
@@ -3142,12 +3142,12 @@ private void DoHorizontal(Active horz)
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool Execute(ClipType clipType, FillRule fillRule, Paths64 solutionClosed)
+    public bool Execute(ClipType clipType, FillRule fillRule, PathsPoint solutionClosed)
     {
-      return Execute(clipType, fillRule, solutionClosed, new Paths64());
+      return Execute(clipType, fillRule, solutionClosed, new PathsPoint());
     }
 
-    public bool Execute(ClipType clipType, FillRule fillRule, PolyTree64 polytree, Paths64 openPaths)
+    public bool Execute(ClipType clipType, FillRule fillRule, PolyTree64 polytree, PathsPoint openPaths)
     {
       polytree.Clear();
       openPaths.Clear();
@@ -3169,7 +3169,7 @@ private void DoHorizontal(Active horz)
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Execute(ClipType clipType, FillRule fillRule, PolyTree64 polytree)
     {
-      return Execute(clipType, fillRule, polytree, new Paths64());
+      return Execute(clipType, fillRule, polytree, new PathsPoint());
     }
 
   } // Clipper64 class
@@ -3191,57 +3191,57 @@ private void DoHorizontal(Active horz)
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddPath(PathD path, PathType polytype, bool isOpen = false)
+    public void AddPath(PathVector2 path, PathType polytype, bool isOpen = false)
     {
       base.AddPath(Clipper.ScalePath64(path, _scale), polytype, isOpen);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddPaths(PathsD paths, PathType polytype, bool isOpen = false)
+    public void AddPaths(PathsVector2 paths, PathType polytype, bool isOpen = false)
     {
       base.AddPaths(Clipper.ScalePaths64(paths, _scale), polytype, isOpen);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddSubject(PathD path)
+    public void AddSubject(PathVector2 path)
     {
       AddPath(path, PathType.Subject);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddOpenSubject(PathD path)
+    public void AddOpenSubject(PathVector2 path)
     {
       AddPath(path, PathType.Subject, true);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddClip(PathD path)
+    public void AddClip(PathVector2 path)
     {
       AddPath(path, PathType.Clip);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddSubject(PathsD paths)
+    public void AddSubject(PathsVector2 paths)
     {
       AddPaths(paths, PathType.Subject);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddOpenSubject(PathsD paths)
+    public void AddOpenSubject(PathsVector2 paths)
     {
       AddPaths(paths, PathType.Subject, true);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AddClip(PathsD paths)
+    public void AddClip(PathsVector2 paths)
     {
       AddPaths(paths, PathType.Clip);
     }
 
     public bool Execute(ClipType clipType, FillRule fillRule,
-        PathsD solutionClosed, PathsD solutionOpen)
+        PathsVector2 solutionClosed, PathsVector2 solutionOpen)
     {
-      Paths64 solClosed64 = new Paths64(), solOpen64 = new Paths64();
+      PathsPoint solClosed64 = new PathsPoint(), solOpen64 = new PathsPoint();
 
       bool success = true;
       solutionClosed.Clear();
@@ -3260,28 +3260,28 @@ private void DoHorizontal(Active horz)
       if (!success) return false;
 
       solutionClosed.EnsureCapacity(solClosed64.Count);
-      foreach (Path64 path in solClosed64)
+      foreach (PathPoint path in solClosed64)
         solutionClosed.Add(Clipper.ScalePathD(path, _invScale));
       solutionOpen.EnsureCapacity(solOpen64.Count);
-      foreach (Path64 path in solOpen64)
+      foreach (PathPoint path in solOpen64)
         solutionOpen.Add(Clipper.ScalePathD(path, _invScale));
 
       return true;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool Execute(ClipType clipType, FillRule fillRule, PathsD solutionClosed)
+    public bool Execute(ClipType clipType, FillRule fillRule, PathsVector2 solutionClosed)
     {
-      return Execute(clipType, fillRule, solutionClosed, new PathsD());
+      return Execute(clipType, fillRule, solutionClosed, new PathsVector2());
     }
 
-    public bool Execute(ClipType clipType, FillRule fillRule, PolyTreeD polytree, PathsD openPaths)
+    public bool Execute(ClipType clipType, FillRule fillRule, PolyTreeD polytree, PathsVector2 openPaths)
     {
       polytree.Clear();
       openPaths.Clear();
       _using_polytree = true;
       (polytree as PolyPathD).Scale = _scale;
-      Paths64 oPaths = new Paths64();
+      PathsPoint oPaths = new PathsPoint();
       bool success = true;
       try
       {
@@ -3296,7 +3296,7 @@ private void DoHorizontal(Active horz)
       if (!success) return false;
       if (oPaths.Count <= 0) return true;
       openPaths.EnsureCapacity(oPaths.Count);
-      foreach (Path64 path in oPaths)
+      foreach (PathPoint path in oPaths)
         openPaths.Add(Clipper.ScalePathD(path, _invScale));
 
       return true;
@@ -3304,7 +3304,7 @@ private void DoHorizontal(Active horz)
 
     public bool Execute(ClipType clipType, FillRule fillRule, PolyTreeD polytree)
     {
-      return Execute(clipType, fillRule, polytree, new PathsD());
+      return Execute(clipType, fillRule, polytree, new PathsVector2());
     }
   } // ClipperD class
 
@@ -3377,7 +3377,7 @@ private void DoHorizontal(Active horz)
     }
 
     public int Count => _childs.Count;
-    public abstract PolyPathBase AddChild(Path64 p);
+    public abstract PolyPathBase AddChild(PathPoint p);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Clear()
@@ -3417,12 +3417,12 @@ private void DoHorizontal(Active horz)
 
 public class PolyPath64 : PolyPathBase
   {
-    public Path64? Polygon { get; private set; } // polytree root's polygon == null
+    public PathPoint? Polygon { get; private set; } // polytree root's polygon == null
 
     public PolyPath64(PolyPathBase? parent = null) : base(parent) {}
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public override PolyPathBase AddChild(Path64 p)
+    public override PolyPathBase AddChild(PathPoint p)
     {
       PolyPathBase newChild = new PolyPath64(this);
       (newChild as PolyPath64)!.Polygon = p;
@@ -3463,12 +3463,12 @@ public class PolyPath64 : PolyPathBase
   public class PolyPathD : PolyPathBase
   {
     internal float Scale { get; set; }
-    public PathD? Polygon { get; private set; }
+    public PathVector2? Polygon { get; private set; }
 
     public PolyPathD(PolyPathBase? parent = null) : base(parent) {}
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public override PolyPathBase AddChild(Path64 p)
+    public override PolyPathBase AddChild(PathPoint p)
     {
       PolyPathBase newChild = new PolyPathD(this);
       (newChild as PolyPathD)!.Scale = Scale;
@@ -3478,7 +3478,7 @@ public class PolyPath64 : PolyPathBase
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public PolyPathBase AddChild(PathD p)
+    public PolyPathBase AddChild(PathVector2 p)
     {
       PolyPathBase newChild = new PolyPathD(this);
       (newChild as PolyPathD)!.Scale = Scale;

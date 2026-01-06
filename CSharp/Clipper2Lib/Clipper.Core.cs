@@ -16,225 +16,45 @@ using EternityWorks;
 
 namespace Clipper2Lib
 {
-  public struct Rect64
+  public class PathPoint : List<Point> 
   {
-    public int left;
-    public int top;
-    public int right;
-    public int bottom;
-
-    public Rect64(int l, int t, int r, int b)
-    {
-      left = l;
-      top = t;
-      right = r;
-      bottom = b;
-    }
-
-    public Rect64(bool isValid)
-    {
-      if (isValid)
-      {
-        left = 0; top = 0; right = 0; bottom = 0;
-      }
-      else
-      {
-        left = int.MaxValue; top = int.MaxValue; 
-        right = int.MinValue; bottom = int.MinValue;
-      }
-    }
-
-    public Rect64(Rect64 rec)
-    {
-      left = rec.left;
-      top = rec.top;
-      right = rec.right;
-      bottom = rec.bottom;
-    }
-
-    public int Width
-    { readonly get => right - left;
-      set => right = left + value;
-    }
-
-    public int Height
-    { readonly get => bottom - top;
-      set => bottom = top + value;
-    }
-
-    public readonly bool IsEmpty()
-    {
-      return bottom <= top || right <= left;
-    }
-
-    public readonly bool IsValid()
-    {
-      return left < int.MaxValue;
-    }
-
-    public readonly Point MidPoint()
-    {
-      return new Point((left + right) /2, (top + bottom)/2);
-    }
-
-    public readonly bool Contains(Point pt)
-    {
-      return pt.X > left && pt.X < right &&
-        pt.Y > top && pt.Y < bottom;
-    }
-
-    public readonly bool Contains(Rect64 rec)
-    {
-      return rec.left >= left && rec.right <= right &&
-        rec.top >= top && rec.bottom <= bottom;
-    }
-
-    public readonly bool Intersects(Rect64 rec)
-    {
-      return (Math.Max(left, rec.left) <= Math.Min(right, rec.right)) &&
-        (Math.Max(top, rec.top) <= Math.Min(bottom, rec.bottom));
-    }
-
-    public readonly Path64 AsPath()
-    {
-      Path64 result = new Path64(4)
-      {
-        new Point(left, top),
-        new Point(right, top),
-        new Point(right, bottom),
-        new Point(left, bottom)
-      };
-      return result;
-    }
-
-  }
-
-  public struct RectD
-  {
-    public float left;
-    public float top;
-    public float right;
-    public float bottom;
-
-    public RectD(float l, float t, float r, float b)
-    {
-      left = l;
-      top = t;
-      right = r;
-      bottom = b;
-    }
-
-    public RectD(RectD rec)
-    {
-      left = rec.left;
-      top = rec.top;
-      right = rec.right;
-      bottom = rec.bottom;
-    }
-
-    public RectD(bool isValid)
-    {
-      if (isValid)
-      {
-        left = 0; top = 0; right = 0; bottom = 0;
-      }
-      else
-      {
-        left = float.MaxValue; top = float.MaxValue;
-        right = -float.MaxValue; bottom = -float.MaxValue;
-      }
-    }
-    public float Width
-    { readonly get => right - left;
-      set => right = left + value;
-    }
-
-    public float Height
-    { readonly get => bottom - top;
-      set => bottom = top + value;
-    }
-
-    public readonly bool IsEmpty()
-    {
-      return bottom <= top || right <= left;
-    }
-
-    public readonly Vector2 MidPoint()
-    {
-      return new Vector2((left + right) / 2, (top + bottom) / 2);
-    }
-
-    public readonly bool Contains(Vector2 pt)
-    {
-      return pt.X > left && pt.X < right &&
-        pt.Y > top && pt.Y < bottom;
-    }
-
-    public readonly bool Contains(RectD rec)
-    {
-      return rec.left >= left && rec.right <= right &&
-        rec.top >= top && rec.bottom <= bottom;
-    }
-
-    public readonly bool Intersects(RectD rec)
-    {
-      return (Math.Max(left, rec.left) < Math.Min(right, rec.right)) &&
-        (Math.Max(top, rec.top) < Math.Min(bottom, rec.bottom));
-    }
-
-    public readonly PathD AsPath()
-    {
-      PathD result = new PathD(4)
-      {
-        new Vector2(left, top),
-        new Vector2(right, top),
-        new Vector2(right, bottom),
-        new Vector2(left, bottom)
-      };
-      return result;
-    }
-
-  }
-
-  public class Path64 : List<Point> 
-  {
-    public Path64() : base() { }
-    public Path64(int capacity = 0) : base(capacity) { }
-    public Path64(IEnumerable<Point> path) : base(path) { }
+    public PathPoint() : base() { }
+    public PathPoint(int capacity = 0) : base(capacity) { }
+    public PathPoint(IEnumerable<Point> path) : base(path) { }
     public override string ToString()
     {
       return string.Join(", ", this);
     }
   }
 
-  public class Paths64 : List<Path64>
+  public class PathsPoint : List<PathPoint>
   {
-    public Paths64() : base() { }
-    public Paths64(int capacity = 0) : base(capacity) { }
-    public Paths64(IEnumerable<Path64> paths) : base(paths) { }
+    public PathsPoint() : base() { }
+    public PathsPoint(int capacity = 0) : base(capacity) { }
+    public PathsPoint(IEnumerable<PathPoint> paths) : base(paths) { }
     public override string ToString()
     {
       return string.Join(Environment.NewLine, this);
     }
   }
 
-  public class PathD : List<Vector2>
+  public class PathVector2 : List<Vector2>
   {
-    public PathD() : base() { }
-    public PathD(int capacity = 0) : base(capacity) { }
-    public PathD(IEnumerable<Vector2> path) : base(path) { }
-    public string ToString()
+    public PathVector2() : base() { }
+    public PathVector2(int capacity = 0) : base(capacity) { }
+    public PathVector2(IEnumerable<Vector2> path) : base(path) { }
+    public override string ToString()
     {
       return string.Join(", ", ConvertAll(x => x.ToString()));
     }
   }
 
-  public class PathsD : List<PathD>
+  public class PathsVector2 : List<PathVector2>
   {
-    public PathsD() : base() { }
-    public PathsD(int capacity = 0) : base(capacity) { }
-    public PathsD(IEnumerable<PathD> paths) : base(paths) { }
-    public string ToString()
+    public PathsVector2() : base() { }
+    public PathsVector2(int capacity = 0) : base(capacity) { }
+    public PathsVector2(IEnumerable<PathVector2> paths) : base(paths) { }
+    public override string ToString()
     {
       return string.Join(Environment.NewLine, ConvertAll(x => x.ToString()));
     }
@@ -510,16 +330,16 @@ namespace Clipper2Lib
       }
     }
 
-    public static Rect64 GetBounds(Path64 path)
+    public static Rectangle GetBounds(PathPoint path)
     {
-      if (path.Count == 0) return new Rect64();
-      Rect64 result = Clipper.InvalidRect64;
+      if (path.Count == 0) return new Rectangle();
+      Rectangle result = Clipper.InvalidRectangle;
       foreach (Point pt in path)
       {
-        if (pt.X < result.left) result.left = pt.X;
-        if (pt.X > result.right) result.right = pt.X;
-        if (pt.Y < result.top) result.top = pt.Y;
-        if (pt.Y > result.bottom) result.bottom = pt.Y;
+        if (pt.X < result.Left) result.X = pt.X;
+        if (pt.X > result.Right) result.width = pt.X - result.X;
+        if (pt.Y < result.Top) result.Y = pt.Y;
+        if (pt.Y > result.Bottom) result.height = pt.Y - result.Y;
       }
       return result;
     }
@@ -540,7 +360,7 @@ namespace Clipper2Lib
       );
     }
 
-    public static PointInPolygonResult PointInPolygon(Point pt, Path64 polygon)
+    public static PointInPolygonResult PointInPolygon(Point pt, PathPoint polygon)
     {
       int len = polygon.Count, start = 0;
       if (len < 3) return PointInPolygonResult.IsOutside;
@@ -613,7 +433,7 @@ namespace Clipper2Lib
       return val == 0 ? PointInPolygonResult.IsOutside : PointInPolygonResult.IsInside;
     }
 
-    public static bool Path2ContainsPath1(Path64 path1, Path64 path2)
+    public static bool Path2ContainsPath1(PathPoint path1, PathPoint path2)
     {
       // we need to make some accommodation for rounding errors
       // so we won't jump if the first vertex is found outside
@@ -637,8 +457,6 @@ namespace Clipper2Lib
       Point mp = GetBounds(path1).MidPoint();
       return InternalClipper.PointInPolygon(mp, path2) != PointInPolygonResult.IsOutside;
     }
-
-
   } // InternalClipper
 
 } // namespace

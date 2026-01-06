@@ -7,6 +7,7 @@
 * License   :  https://www.boost.org/LICENSE_1_0.txt                           *
 *******************************************************************************/
 
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -37,20 +38,20 @@ namespace Clipper2Lib
 
     private class Group
     {
-      internal Paths64 inPaths;
+      internal PathsPoint inPaths;
       internal JoinType joinType;
       internal EndType endType;
       internal bool pathsReversed;
       internal int lowestPathIdx;
 
-      public Group(Paths64 paths, JoinType joinType, EndType endType = EndType.Polygon)
+      public Group(PathsPoint paths, JoinType joinType, EndType endType = EndType.Polygon)
       {
         this.joinType = joinType;
         this.endType = endType;
 
         bool isJoined = ((endType == EndType.Polygon) || (endType == EndType.Joined));
-        inPaths = new Paths64(paths.Count);
-        foreach(Path64 path in paths)
+        inPaths = new PathsPoint(paths.Count);
+        foreach(PathPoint path in paths)
           inPaths.Add(Clipper.StripDuplicates(path, isJoined));
 
         if (endType == EndType.Polygon)
@@ -87,9 +88,9 @@ namespace Clipper2Lib
     private const float arc_const = 0.002f; // <-- 1/500
 
     private readonly List<Group> _groupList = new List<Group>();
-    private Path64 pathOut = new Path64();
-    private readonly PathD _normals = new PathD();
-    private Paths64 _solution = new Paths64();
+    private PathPoint pathOut = new PathPoint();
+    private readonly PathVector2 _normals = new PathVector2();
+    private PathsPoint _solution = new PathsPoint();
     private PolyTree64? _solutionTree;
 
     private float _groupDelta; //*0.5 for open paths; *-1.0 for negative areas
@@ -106,8 +107,8 @@ namespace Clipper2Lib
     public bool PreserveCollinear { get; set; }
     public bool ReverseSolution { get; set; }
 
-    public delegate float DeltaCallback64(Path64 path,
-      PathD path_norms, int currPt, int prevPt);
+    public delegate float DeltaCallback64(PathPoint path,
+      PathVector2 path_norms, int currPt, int prevPt);
     public DeltaCallback64? DeltaCallback { get; set; }
 
     public ClipperOffset(float miterLimit = 2.0f,
@@ -125,15 +126,15 @@ namespace Clipper2Lib
       _groupList.Clear();
     }
 
-    public void AddPath(Path64 path, JoinType joinType, EndType endType)
+    public void AddPath(PathPoint path, JoinType joinType, EndType endType)
     {
       int cnt = path.Count;
       if (cnt == 0) return;
-      Paths64 pp = new Paths64(1) { path };
+      PathsPoint pp = new PathsPoint(1) { path };
       AddPaths(pp, joinType, endType);
     }
 
-    public void AddPaths(Paths64 paths, JoinType joinType, EndType endType)
+    public void AddPaths(PathsPoint paths, JoinType joinType, EndType endType)
     {
       int cnt = paths.Count;
       if (cnt == 0) return;
@@ -169,7 +170,7 @@ namespace Clipper2Lib
       if (Math.Abs(delta) < 0.5)
       {
         foreach (Group group in _groupList)
-          foreach (Path64 path in group.inPaths)
+          foreach (PathPoint path in group.inPaths)
             _solution.Add(path);
         return;
       }
@@ -198,7 +199,7 @@ namespace Clipper2Lib
 
     }
 
-    public void Execute(float delta, Paths64 solution)
+    public void Execute(float delta, PathsPoint solution)
     {
       solution.Clear();
       _solution = solution;
@@ -228,13 +229,13 @@ namespace Clipper2Lib
       return new Vector2(dy, -dx);
     }
 
-    public void Execute(DeltaCallback64 deltaCallback, Paths64 solution)
+    public void Execute(DeltaCallback64 deltaCallback, PathsPoint solution)
     {
       DeltaCallback = deltaCallback;
       Execute(1.0f, solution);
     }    
     
-    internal static void GetLowestPathInfo(Paths64 paths, out int idx, out bool isNegArea)
+    internal static void GetLowestPathInfo(PathsPoint paths, out int idx, out bool isNegArea)
     {
       idx = -1;
       isNegArea = false;
@@ -314,7 +315,7 @@ namespace Clipper2Lib
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void DoBevel(Path64 path, int j, int k)
+    private void DoBevel(PathPoint path, int j, int k)
     {
       Point pt1, pt2;
       if (j == k)
@@ -341,7 +342,7 @@ namespace Clipper2Lib
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void DoSquare(Path64 path, int j, int k)
+    private void DoSquare(PathPoint path, int j, int k)
     {
       Vector2 vec;
       if (j == k)
@@ -387,7 +388,7 @@ namespace Clipper2Lib
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void DoMiter(Path64 path, int j, int k, float cosA)
+    private void DoMiter(PathPoint path, int j, int k, float cosA)
     {
       float q = _groupDelta / (cosA + 1);
       pathOut.Add(new Point(
@@ -396,7 +397,7 @@ namespace Clipper2Lib
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void DoRound(Path64 path, int j, int k, float angle)
+    private void DoRound(PathPoint path, int j, int k, float angle)
     {
       if (DeltaCallback != null)
       {
@@ -426,7 +427,7 @@ namespace Clipper2Lib
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void BuildNormals(Path64 path)
+    private void BuildNormals(PathPoint path)
     {
       int cnt = path.Count;
       _normals.Clear();
@@ -437,7 +438,7 @@ namespace Clipper2Lib
       _normals.Add(GetUnitNormal(path[cnt - 1], path[0]));
     }
 
-    private void OffsetPoint(Group group, Path64 path, int j, ref int k)
+    private void OffsetPoint(Group group, PathPoint path, int j, ref int k)
     {
       if (path[j] == path[k]) { k = j; return; }
 
@@ -502,9 +503,9 @@ namespace Clipper2Lib
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void OffsetPolygon(Group group, Path64 path)
+    private void OffsetPolygon(Group group, PathPoint path)
     {
-      pathOut = new Path64();
+      pathOut = new PathPoint();
       int cnt = path.Count, prev = cnt - 1;
       for (int i = 0; i < cnt; i++)
         OffsetPoint(group, path, i, ref prev);
@@ -512,7 +513,7 @@ namespace Clipper2Lib
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void OffsetOpenJoined(Group group, Path64 path)
+    private void OffsetOpenJoined(Group group, PathPoint path)
     {
       OffsetPolygon(group, path);
       path = Clipper.ReversePath(path);
@@ -520,9 +521,9 @@ namespace Clipper2Lib
       OffsetPolygon(group, path);
     }
 
-    private void OffsetOpenPath(Group group, Path64 path)
+    private void OffsetOpenPath(Group group, PathPoint path)
     {
-      pathOut = new Path64();
+      pathOut = new PathPoint();
       int highI = path.Count - 1;
 
       if (DeltaCallback != null) 
@@ -607,12 +608,12 @@ namespace Clipper2Lib
         _stepsPerRad = stepsPer360 / (2 * MathF.PI);
       }
 
-      using List<Path64>.Enumerator pathIt = group.inPaths.GetEnumerator();
+      using List<PathPoint>.Enumerator pathIt = group.inPaths.GetEnumerator();
       while (pathIt.MoveNext())
       {
-        Path64 p = pathIt.Current!;
+        PathPoint p = pathIt.Current!;
 
-        pathOut = new Path64();
+        pathOut = new PathPoint();
         int cnt = p.Count;
 
         switch (cnt)
@@ -637,8 +638,8 @@ namespace Clipper2Lib
             else
             {
               int d = (int) Math.Ceiling(_groupDelta);
-              Rect64 r = new Rect64(pt.X - d, pt.Y - d, pt.X + d, pt.Y + d);
-              pathOut = r.AsPath();
+              Rectangle r = new Rectangle(pt.X - d, pt.Y - d, pt.X + d, pt.Y + d);
+              pathOut = Clipper.AsPath(r);
             }
             _solution.Add(pathOut);
             continue; // end of offsetting a single point 

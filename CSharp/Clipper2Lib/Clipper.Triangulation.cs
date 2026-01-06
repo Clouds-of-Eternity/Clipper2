@@ -85,7 +85,7 @@ namespace Clipper2Lib
       useDelaunay = delaunay;
     }
 
-    private void AddPath(Path64 path)
+    private void AddPath(PathPoint path)
     {
       int len = path.Count;
       if (len == 0) return;
@@ -196,17 +196,17 @@ namespace Clipper2Lib
       }
     }
 
-    private bool AddPaths(Paths64 paths)
+    private bool AddPaths(PathsPoint paths)
     {
       int totalVertexCount = 0;
-      foreach (Path64 path in paths)
+      foreach (PathPoint path in paths)
         totalVertexCount += path.Count;
       if (totalVertexCount == 0) return false;
 
       allVertices.Capacity = allVertices.Count + totalVertexCount;
       allEdges.Capacity = allEdges.Count + totalVertexCount;
 
-      foreach (Path64 path in paths)
+      foreach (PathPoint path in paths)
         AddPath(path);
 
       return allVertices.Count > 2;
@@ -753,9 +753,9 @@ namespace Clipper2Lib
       if (firstActive == edge) firstActive = next;
     }
 
-    internal TriangulateResult Execute(Paths64 paths, out Paths64 sol)
+    internal TriangulateResult Execute(PathsPoint paths, out PathsPoint sol)
     {
-      sol = new Paths64();
+      sol = new PathsPoint();
 
       if (!AddPaths(paths))
       {
@@ -907,10 +907,10 @@ namespace Clipper2Lib
         }
       }
 
-      sol = new Paths64(allTriangles.Count);
+      sol = new PathsPoint(allTriangles.Count);
       foreach (Triangle tri in allTriangles)
       {
-        Path64 p = PathFromTriangle(tri);
+        PathPoint p = PathFromTriangle(tri);
         int cps = InternalClipper.CrossProductSign(p[0], p[1], p[2]);
         if (cps == 0) continue;
         if (cps < 0) p.Reverse();
@@ -1003,7 +1003,7 @@ namespace Clipper2Lib
       vert.edges.RemoveAt(idx);
     }
 
-    private static bool FindLocMinIdx(Path64 path, int len, ref int idx)
+    private static bool FindLocMinIdx(PathPoint path, int len, ref int idx)
     {
       if (len < 3) return false;
       int i0 = idx;
@@ -1053,9 +1053,9 @@ namespace Clipper2Lib
       return res;
     }
 
-    private static Path64 PathFromTriangle(Triangle tri)
+    private static PathPoint PathFromTriangle(Triangle tri)
     {
-      Path64 res = new Path64(3)
+      PathPoint res = new PathPoint(3)
             {
                 tri.edges[0].vL.pt,
                 tri.edges[0].vR.pt
