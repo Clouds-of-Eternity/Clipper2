@@ -25,6 +25,13 @@ namespace Clipper2Lib
     {
       return string.Join(", ", this);
     }
+    public void Draw(Sprite line, Material material, float zPos, float lineWidth, Color lineColor, RenderBatch batch)
+    {
+      for (int j = 0; j < Count; ++j)
+        Renderer.DrawLine(line, material,
+          this[j].ToVector2().AsVector3() - Vector3.UnitZ * zPos, this[(j + 1) % Count].ToVector2().AsVector3() - Vector3.UnitZ * zPos,
+          lineWidth, lineColor, batch);
+    }
   }
 
   public class PathsPoint : List<PathPoint>
@@ -35,6 +42,15 @@ namespace Clipper2Lib
     public override string ToString()
     {
       return string.Join(Environment.NewLine, this);
+    }
+    public void Draw(Sprite line, Material material, float zPos, float lineWidth, Color lineColor, RenderBatch batch)
+    {
+      for (int i = 0; i < Count; ++i)
+      {
+        int count = this[i].Count;
+        for (int j = 0; j < count; ++j)
+            this[i].Draw(line, material, zPos, lineWidth, lineColor, batch);
+      }
     }
   }
 
@@ -47,6 +63,13 @@ namespace Clipper2Lib
     {
       return string.Join(", ", ConvertAll(x => x.ToString()));
     }
+    public void Draw(Sprite line, Material material, float zPos, float lineWidth, Color lineColor, RenderBatch batch)
+    {
+      for (int j = 0; j < Count; ++j)
+        Renderer.DrawLine(line, material,
+          this[j].AsVector3() - Vector3.UnitZ * zPos, this[(j + 1) % Count].AsVector3() - Vector3.UnitZ * zPos,
+          lineWidth, lineColor, batch);
+    }
   }
 
   public class PathsVector2 : List<PathVector2>
@@ -57,6 +80,15 @@ namespace Clipper2Lib
     public override string ToString()
     {
       return string.Join(Environment.NewLine, ConvertAll(x => x.ToString()));
+    }
+    public void Draw(Sprite line, Material material, float zPos, float lineWidth, Color lineColor, RenderBatch batch)
+    {
+      for (int i = 0; i < Count; ++i)
+      {
+        int count = this[i].Count;
+        for (int j = 0; j < count; ++j)
+            this[i].Draw(line, material, zPos, lineWidth, lineColor, batch);
+      }
     }
   }
 
