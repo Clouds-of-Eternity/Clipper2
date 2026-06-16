@@ -358,7 +358,7 @@ namespace Clipper2Lib
 
       float absDelta = Math.Abs(_groupDelta);
       // now offset the original vertex delta units aint unit vector
-      Vector2 ptQ = path[j].ToVector2();
+      Vector2 ptQ = path[j].AsVector2();
       ptQ = TranslatePoint(ptQ, absDelta * vec.X, absDelta * vec.Y);
 
       // get perpendicular vertices

@@ -365,7 +365,7 @@ namespace Clipper2Lib
       if (InternalClipper.IsAlmostZero(scale - 1)) return path;
       PathPoint result = new PathPoint(path.Count);
       foreach (Point pt in path)
-        result.Add((pt.ToVector2() * scale).ToPoint());
+        result.Add((pt.AsVector2() * scale).ToPoint());
       return result;
     }
 
@@ -420,7 +420,7 @@ namespace Clipper2Lib
       int cnt = path.Count;
       PathVector2 res = new PathVector2(cnt);
       foreach (Point pt in path)
-        res.Add(pt.ToVector2() * scale);
+        res.Add(pt.AsVector2() * scale);
       return res;
     }
 
@@ -462,7 +462,7 @@ namespace Clipper2Lib
     {
       PathVector2 result = new PathVector2(path.Count);
       foreach (Point pt in path)
-        result.Add(pt.ToVector2());
+        result.Add(pt.AsVector2());
       return result;
     }
 

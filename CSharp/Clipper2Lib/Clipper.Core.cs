@@ -29,7 +29,7 @@ namespace Clipper2Lib
     {
       for (int j = 0; j < Count; ++j)
         Renderer.DrawLine(line, material,
-          this[j].ToVector2().AsVector3() - Vector3.UnitZ * zPos, this[(j + 1) % Count].ToVector2().AsVector3() - Vector3.UnitZ * zPos,
+          this[j].AsVector2().AsVector3() - Vector3.UnitZ * zPos, this[(j + 1) % Count].AsVector2().AsVector3() - Vector3.UnitZ * zPos,
           lineWidth, lineColor, batch);
     }
   }
